@@ -1,0 +1,3 @@
+FROM scratch
+COPY kafka_exporter /
+ENTRYPOINT ["/kafka_exporter"]

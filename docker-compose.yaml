@@ -1,0 +1,45 @@
+version: '3.7'
+services:
+  kafka_exporter:
+    build:
+      context: .
+    image: adambabik/kafka_exporter:latest
+    restart: unless-stopped
+    command:
+     - -a=0.0.0.0:9150
+     - -b=kafka:9092
+    ports:
+      - 9150:9150
+    depends_on:
+      - zookeeper
+      - kafka
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - 9090:9090
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - kafka_exporter
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:5.5.0
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:5.5.0
+    restart: unless-stopped
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"

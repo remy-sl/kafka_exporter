@@ -1,0 +1,31 @@
+before:
+  hooks:
+    - go mod download
+builds:
+  -
+    dir: ./cmd/kafka_exporter
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+dockers:
+  -
+    image_templates:
+      - "adambabik/kafka_exporter:latest"
+      - "adambabik/kafka_exporter:{{ .Tag }}"
+    dockerfile: Dockerfile.scratch
+archives:
+  - replacements:
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-{{ .Commit }}"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
