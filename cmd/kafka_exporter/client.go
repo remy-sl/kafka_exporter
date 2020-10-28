@@ -2,6 +2,4 @@
 
 package main
 
-var (
-	confluentClientSupported = true
-)
+var confluentClientSupported = true
