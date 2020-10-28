@@ -1,0 +1,14 @@
+{{- if .Values.serviceMonitor.create -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "kafka_exporter.fullname" . }}
+  labels:
+    {{- include "kafka_exporter.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "kafka_exporter.selectorLabels" . | nindent 6 }}
+  endpoints:
+    - port: {{ .Values.serviceMonitor.port }}
+{{- end -}}
