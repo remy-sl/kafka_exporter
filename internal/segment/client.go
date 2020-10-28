@@ -165,21 +165,28 @@ func (c *Client) Offsets(ctx context.Context) (result []types.Offset, err error)
 	}
 
 	var (
-		mu         sync.Mutex // mu
+		mu         sync.Mutex // mutex for resultsMap
 		resultsMap = make(map[string]types.Offset)
-		wg         sync.WaitGroup
-		errC       = make(chan error, 1)
-		requests   = make(chan offsetReq, 10)
+
+		wg       sync.WaitGroup
+		errC     = make(chan error, 1)
+		requests = make(chan offsetReq, 10)
 	)
 
 	go func() {
 		for oerr := range errC {
 			if oerr != nil && err == nil {
 				err = oerr
+				return
 			}
 		}
 	}()
 
+	// Spawn 64 workers.
+	//
+	// TODO: This number is estimated based on some real-world use cases
+	//  which might not be suitable for everyone.
+	//  It should be configurable.
 	for i := 0; i < 64; i++ {
 		wg.Add(1)
 		go func() {
@@ -291,8 +298,8 @@ func (c *Client) ConsumerGroups(ctx context.Context) (result []types.ConsumerGro
 	}
 
 	result = make([]types.ConsumerGroup, 0, len(groups))
-	for _, g := range groups {
-		result = append(result, types.ConsumerGroup{Name: g})
+	for _, name := range groups {
+		result = append(result, types.ConsumerGroup{Name: name})
 	}
 	return result, nil
 }
@@ -346,7 +353,7 @@ func (c *Client) OffsetsForConsumerGroups(ctx context.Context) (result []types.O
 		_ = coConn.Close()
 
 		for topic, offset := range offsets {
-			partitions := map[int]types.LowHighOffset{}
+			partitions := make(map[int]types.LowHighOffset, len(offsets))
 			for pID, value := range offset {
 				partitions[pID] = types.LowHighOffset{
 					High: value,
