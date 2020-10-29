@@ -14,7 +14,7 @@ dockers:
     image_templates:
       - "adambabik/kafka_exporter:latest"
       - "adambabik/kafka_exporter:{{ .Tag }}"
-    dockerfile: Dockerfile.scratch
+    dockerfile: Dockerfile.release
 archives:
   - replacements:
       386: i386
@@ -29,3 +29,5 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+release:
+  prerelease: auto
