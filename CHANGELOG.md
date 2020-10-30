@@ -1,3 +1,8 @@
+# 0.1.5 / 2020-10-30
+
+* cmd/kafka_exporter: allow setting secrets using envs
+* charts/kafka-exporter: move secrets to Secrets
+
 # 0.1.4 / 2020-10-29
 
 * metrics: add kafka_broker_info

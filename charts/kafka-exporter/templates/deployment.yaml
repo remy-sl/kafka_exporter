@@ -37,18 +37,23 @@ spec:
             {{- if .Values.kafkaExporter.address }}
             - "--broker={{ .Values.kafkaExporter.broker }}"
             {{- end }}
-            {{- if .Values.kafkaExporter.saslUsername }}
-            - "--sasl.username={{ .Values.kafkaExporter.saslUsername }}"
-            {{- end }}
-            {{- if .Values.kafkaExporter.saslPassword }}
-            - "--sasl.password={{ .Values.kafkaExporter.saslPassword }}"
-            {{- end }}
             {{- if .Values.kafkaExporter.mechanisms }}
             - "--sasl.mechanisms={{ .Values.kafkaExporter.mechanisms }}"
             {{- end }}
             {{- if .Values.kafkaExporter.tls }}
             - "--tls"
             {{- end }}
+          env:
+            - name: KAFKA_SASL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kafka_exporter.fullname" . }}-{{ .Release.Revision }}
+                  key: saslUsername
+            - name: KAFKA_SASL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kafka_exporter.fullname" . }}-{{ .Release.Revision }}
+                  key: saslPassword
           ports:
             - name: http
               containerPort: 8080
