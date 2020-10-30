@@ -34,10 +34,12 @@ func main() {
 				Usage:   "a Kafka broker address",
 			},
 			&cli.StringFlag{
-				Name: "sasl.username",
+				Name:    "sasl.username",
+				EnvVars: []string{"KAFKA_SASL_USERNAME"},
 			},
 			&cli.StringFlag{
-				Name: "sasl.password",
+				Name:    "sasl.password",
+				EnvVars: []string{"KAFKA_SASL_PASSWORD"},
 			},
 			&cli.StringFlag{
 				Name: "sasl.mechanisms", // typical values: PLAIN
