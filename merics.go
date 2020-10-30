@@ -20,6 +20,12 @@ var (
 		Help:      "A number of brokers in a cluster.",
 	}, nil)
 
+	brokerInfo = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "broker_info",
+		Help:      "Information about a broker.",
+	}, []string{"id", "host", "port", "address"})
+
 	topicPartitions = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "topic_partitions_total",
@@ -73,6 +79,7 @@ var allMetrics = []prometheus.Collector{
 	collectTime,
 
 	brokersTotal,
+	brokerInfo,
 	topicPartitions,
 	topicPartitionLeader,
 	topicPartitionCurrentOffset,

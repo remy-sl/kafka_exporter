@@ -3,6 +3,7 @@ package kafka_exporter
 import (
 	"context"
 	"log"
+	"net"
 	"strconv"
 	"sync"
 	"time"
@@ -34,14 +35,23 @@ func (e *Collector) Collect(ch chan<- prometheus.Metric) {
 
 	var wg sync.WaitGroup
 
-	// Collect the total number of Kafka brokers.
+	// Collect information about Kafka brokers.
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 
 		brokers := e.brokers()
-		brokersTotal.With(nil).Set(float64(brokers))
+		brokersTotal.With(nil).Set(float64(len(brokers)))
 		brokersTotal.Collect(ch)
+
+		for _, b := range brokers {
+			addrs, err := net.LookupHost(b.Host)
+			if err != nil {
+				log.Printf("failed to resolve %q: %v", b.Host, err)
+			}
+			brokerInfo.WithLabelValues(strconv.Itoa(b.ID), b.Host, strconv.Itoa(b.Port), addrs[0]).Set(1)
+		}
+		brokerInfo.Collect(ch)
 	}()
 
 	// Collect information about consumer groups.
@@ -107,14 +117,14 @@ func (e *Collector) Collect(ch chan<- prometheus.Metric) {
 	wg.Wait()
 }
 
-func (e *Collector) brokers() int {
+func (e *Collector) brokers() []types.Broker {
 	brokers, err := e.client.Brokers(context.Background())
 	if err != nil {
 		log.Printf("failed to get brokers: %v", err)
-		return 0
+		return nil
 	}
 	log.Printf("got brokers: %+v", brokers)
-	return len(brokers)
+	return brokers
 }
 
 func (e *Collector) topics() []types.Topic {

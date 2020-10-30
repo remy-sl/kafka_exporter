@@ -1,4 +1,8 @@
-# 0.1.3 / 2020-10-28
+# 0.1.4 / 2020-10-29
+
+* metrics: add kafka_broker_info
+
+# 0.1.3 / 2020-10-29
 
 * charts/kafka_exporter: add helm chart
 * segment/client: fix collecting consumer groups
