@@ -13,6 +13,7 @@ Below you can find a list of supported metrics. Metrics support is different per
 | Name                  | Description                       | Clients                      |
 | --------------------- | --------------------------------- | ---------------------------- |
 | `kafka_brokers_total` | A number of brokers in a cluster. | ✅ segment ✅ confluent     |
+| `kafka_broker_info`   | Information about a broker.       | ✅ segment ✅ confluent     |
 
 ### Topics
 
