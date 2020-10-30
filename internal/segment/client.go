@@ -268,38 +268,33 @@ func (c *Client) Offsets(ctx context.Context) (result []types.Offset, err error)
 }
 
 func (c *Client) ConsumerGroups(ctx context.Context) (result []types.ConsumerGroup, err error) {
-	conn, err := c.dial(ctx, c.cfg.Broker)
+	brokers, err := c.Brokers(ctx)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if err == nil {
-			err = conn.Close()
-		}
-	}()
 
-	ctrlBroker, err := conn.Controller()
-	if err != nil {
-		return nil, err
-	}
-	ctrlConn, err := c.dial(ctx, fmt.Sprintf("%s:%d", ctrlBroker.Host, ctrlBroker.Port))
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if err == nil {
-			err = ctrlConn.Close()
-		}
-	}()
+	var groups []string
 
-	groups, err := ctrlConn.ListGroups()
-	if err != nil {
-		return nil, err
+	for _, broker := range brokers {
+		conn, err := c.dial(ctx, fmt.Sprintf("%s:%d", broker.Host, broker.Port))
+		if err != nil {
+			return nil, err
+		}
+		items, err := conn.ListGroups()
+		_ = conn.Close()
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, items...)
 	}
 
 	result = make([]types.ConsumerGroup, 0, len(groups))
 	for _, name := range groups {
-		result = append(result, types.ConsumerGroup{Name: name})
+		// Empty groups can be returned.
+		// TODO: figure out what empty group name means.
+		if name != "" {
+			result = append(result, types.ConsumerGroup{Name: name})
+		}
 	}
 	return result, nil
 }
