@@ -1,11 +1,9 @@
 package kafka_exporter
 
 import (
-	"context"
 	"sync"
 	"testing"
 
-	"github.com/adambabik/kafka_exporter/pkg/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -17,89 +15,6 @@ func TestCollector_Describe(t *testing.T) {
 	c := new(Collector)
 	c.Describe(ch)
 	require.Equal(t, len(allMetrics), len(ch))
-}
-
-type mockKafkaClient struct{}
-
-func (mockKafkaClient) Brokers(ctx context.Context) ([]types.Broker, error) {
-	return []types.Broker{
-		{
-			ID:   1,
-			Host: "127.0.0.1",
-			Port: 9100,
-		},
-	}, nil
-}
-
-func (mockKafkaClient) Topics(ctx context.Context) ([]types.Topic, error) {
-	return []types.Topic{
-		{
-			Name: "topic-1",
-			Partitions: []types.Partition{
-				{
-					ID:       0,
-					Leader:   1,
-					Replicas: []int{1},
-					Isrs:     []int{1},
-				},
-			},
-		},
-		{
-			Name: "topic-2",
-			Partitions: []types.Partition{
-				{
-					ID:       0,
-					Leader:   1,
-					Replicas: []int{1},
-					Isrs:     []int{1},
-				},
-				{
-					ID:       1,
-					Leader:   1,
-					Replicas: []int{1},
-					Isrs:     []int{1},
-				},
-			},
-		},
-	}, nil
-}
-
-func (mockKafkaClient) Offsets(ctx context.Context) ([]types.Offset, error) {
-	return []types.Offset{
-		{
-			Topic: "topic-1",
-			Partitions: map[int]types.LowHighOffset{
-				0: {Low: 0, High: 10},
-			},
-		},
-		{
-			Topic: "topic-2",
-			Partitions: map[int]types.LowHighOffset{
-				0: {Low: 0, High: 10},
-				1: {Low: 0, High: 20},
-			},
-		},
-	}, nil
-}
-
-func (mockKafkaClient) ConsumerGroups(ctx context.Context) ([]types.ConsumerGroup, error) {
-	return []types.ConsumerGroup{
-		{
-			Name: "group-1",
-		},
-	}, nil
-}
-
-func (mockKafkaClient) OffsetsForConsumerGroups(ctx context.Context) ([]types.Offset, error) {
-	return []types.Offset{
-		{
-			Topic: "topic-1",
-			Group: "group-1",
-			Partitions: map[int]types.LowHighOffset{
-				0: {Low: 0, High: 5},
-			},
-		},
-	}, nil
 }
 
 func TestCollector_Collect(t *testing.T) {
@@ -118,7 +33,7 @@ func TestCollector_Collect(t *testing.T) {
 		wg.Done()
 	}()
 
-	c := NewCollector(&mockKafkaClient{})
+	c := NewCollector(newMockKafkaClient())
 	c.Collect(ch)
 
 	close(ch)
