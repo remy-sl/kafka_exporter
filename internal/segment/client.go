@@ -366,6 +366,21 @@ func (c *Client) OffsetsForConsumerGroups(ctx context.Context) (result []types.O
 	return result, nil
 }
 
+func (c *Client) Conn(ctx context.Context) (*kafka.Conn, error) {
+	return c.cfg.newDialer().DialContext(ctx, "tcp", c.cfg.Broker)
+}
+
+func (c *Client) Healthcheck(ctx context.Context) error {
+	conn, err := c.Conn(ctx)
+	if err != nil {
+		return err
+	}
+	// It is required to ask for metadata to make sure
+	// the node is up and running.
+	_, err = conn.Brokers()
+	return err
+}
+
 func (c *Client) dial(ctx context.Context, broker string) (*kafka.Conn, error) {
 	return c.cfg.newDialer().DialContext(ctx, "tcp", broker)
 }

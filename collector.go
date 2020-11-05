@@ -16,6 +16,8 @@ type Collector struct {
 	client KafkaClient
 }
 
+var _ prometheus.Collector = (*Collector)(nil) // ensure Collector implements prometheus.Collector interface
+
 func NewCollector(client KafkaClient) *Collector {
 	return &Collector{client: client}
 }
