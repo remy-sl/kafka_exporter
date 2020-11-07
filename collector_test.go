@@ -33,7 +33,7 @@ func TestCollector_Collect(t *testing.T) {
 		wg.Done()
 	}()
 
-	c := NewCollector(newMockKafkaClient())
+	c := NewCollector(newMockKafkaClient(), nopLogger)
 	c.Collect(ch)
 
 	close(ch)

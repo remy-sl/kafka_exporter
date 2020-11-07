@@ -1,14 +1,18 @@
 package main
 
 import (
-	"github.com/adambabik/kafka_exporter/internal/confluent"
-	"github.com/adambabik/kafka_exporter/internal/segment"
+	"errors"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/adambabik/kafka_exporter"
+	"github.com/adambabik/kafka_exporter/internal/confluent"
+	"github.com/adambabik/kafka_exporter/internal/segment"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/urfave/cli/v2"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
@@ -56,8 +60,27 @@ func main() {
 				Name:  "ssl.ca.location", // on macOS with OpenSSL use something like "/usr/local/etc/openssl@1.1/cert.pem"
 				Usage: "location of a SSL certificate authority; only for confluent client",
 			},
+			&cli.BoolFlag{
+				Name:    "verbose",
+				Aliases: []string{"v"},
+				Usage:   "enable verbose logging",
+			},
 		},
 		Action: func(c *cli.Context) (err error) {
+			cfg := zap.NewProductionConfig()
+			if c.Bool("verbose") {
+				cfg.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+			}
+			logger, err := cfg.Build()
+			if err != nil {
+				return fmt.Errorf("failed to create a logger: %w", err)
+			}
+			defer func() {
+				if sErr := logger.Sync(); err == nil && sErr != nil {
+					err = sErr
+				}
+			}()
+
 			var client kafka_exporter.KafkaClient
 
 			switch c.String("client") {
@@ -95,16 +118,18 @@ func main() {
 					SALSMechanism: c.String("sasl.mechanisms"),
 					TLSEnabled:    c.Bool("tls"),
 				})
+			default:
+				return errors.New("invalid client flag")
 			}
 
-			exporter := kafka_exporter.NewCollector(client)
+			exporter := kafka_exporter.NewCollector(client, logger)
 
 			if err := prometheus.Register(exporter); err != nil {
 				return err
 			}
 
 			address := c.String("address")
-			log.Printf("listening on address %s", address)
+			logger.Info("listening on address", zap.String("address", address))
 			return kafka_exporter.ListenAndServe("/metrics", address)
 		},
 	}
